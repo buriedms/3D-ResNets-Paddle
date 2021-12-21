@@ -20,8 +20,6 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger):
     for i, (inputs, targets) in enumerate(data_loader):
         data_time.update(time.time() - end_time)
 
-        if not opt.no_cuda:
-            targets = targets.cuda(async=True)
         inputs = Variable(inputs, volatile=True)
         targets = Variable(targets, volatile=True)
         outputs = model(inputs)

@@ -162,7 +162,6 @@ def generate_model(opt):
                 sample_duration=opt.sample_duration)
 
     if not opt.no_cuda:
-        model = model.cuda()
         model = nn.DataParallel(model, device_ids=None)
 
         if opt.pretrain_path:
