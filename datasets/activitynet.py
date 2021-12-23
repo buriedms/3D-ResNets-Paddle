@@ -1,5 +1,4 @@
-import torch
-import torch.utils.data as data
+import paddle
 from PIL import Image
 import os
 import functools
@@ -227,7 +226,7 @@ def make_untrimmed_dataset(root_path, annotation_path, subset,
     return dataset, idx_to_class
 
 
-class ActivityNet(data.Dataset):
+class ActivityNet(paddle.io.Dataset):
     """
     Args:
         root (string): Root directory path.
@@ -285,7 +284,7 @@ class ActivityNet(data.Dataset):
         if self.spatial_transform is not None:
             self.spatial_transform.randomize_parameters()
             clip = [self.spatial_transform(img) for img in clip]
-        clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
+        clip = paddle.stack(clip, 0).transpose(1, 0, 2, 3)
 
         target = self.data[index]
         if self.target_transform is not None:

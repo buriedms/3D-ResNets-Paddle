@@ -1,5 +1,3 @@
-# import torch
-# import torch.utils.data as data
 import paddle
 from paddle.io import Dataset
 from PIL import Image
