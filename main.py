@@ -2,10 +2,9 @@ import os
 import sys
 import json
 import numpy as np
-import torch
-from torch import nn
-from torch import optim
-from torch.optim import lr_scheduler
+import paddle
+import paddle.nn as nn
+import paddle.optimizer as optim
 
 from opts import parse_opts
 from model import generate_model
@@ -40,14 +39,17 @@ if __name__ == '__main__':
     opt.std = get_std(opt.norm_value)
     print(opt)
 
+
     os.makedirs(opt.result_path,exist_ok=True)
     with open(os.path.join(opt.result_path, 'opts.json'), 'w') as opt_file:
         json.dump(vars(opt), opt_file)
 
-    torch.manual_seed(opt.manual_seed)
+    paddle.seed(opt.manual_seed)
 
     model, parameters = generate_model(opt)
     print(model)
+    # raise NotImplementedError
+
     criterion = nn.CrossEntropyLoss()
     if not opt.no_cuda:
         criterion = criterion.cuda()
@@ -77,12 +79,11 @@ if __name__ == '__main__':
         target_transform = ClassLabel()
         training_data = get_training_set(opt, spatial_transform,
                                          temporal_transform, target_transform)
-        train_loader = torch.utils.data.DataLoader(
+        train_loader = paddle.io.DataLoader(
             training_data,
             batch_size=opt.batch_size,
             shuffle=True,
-            num_workers=opt.n_threads,
-            pin_memory=True)
+            num_workers=opt.n_threads)
         train_logger = Logger(
             os.path.join(opt.result_path, 'train.log'),
             ['epoch', 'loss', 'acc', 'lr'])
@@ -90,19 +91,15 @@ if __name__ == '__main__':
             os.path.join(opt.result_path, 'train_batch.log'),
             ['epoch', 'batch', 'iter', 'loss', 'acc', 'lr'])
 
-        if opt.nesterov:
-            dampening = 0
-        else:
-            dampening = opt.dampening
-        optimizer = optim.SGD(
-            parameters,
-            lr=opt.learning_rate,
+
+        learning_rate=optim.lr.ReduceOnPlateau(
+            opt.learning_rate, mode='min', patience=opt.lr_patience)
+        optimizer = optim.Momentum(
+            parameters=parameters,
+            learning_rate=learning_rate,
             momentum=opt.momentum,
-            dampening=dampening,
             weight_decay=opt.weight_decay,
-            nesterov=opt.nesterov)
-        scheduler = lr_scheduler.ReduceLROnPlateau(
-            optimizer, 'min', patience=opt.lr_patience)
+            use_nesterov=opt.nesterov)
     if not opt.no_val:
         spatial_transform = Compose([
             Scale(opt.sample_size),
@@ -113,18 +110,17 @@ if __name__ == '__main__':
         target_transform = ClassLabel()
         validation_data = get_validation_set(
             opt, spatial_transform, temporal_transform, target_transform)
-        val_loader = torch.utils.data.DataLoader(
+        val_loader = paddle.io.DataLoader(
             validation_data,
             batch_size=opt.batch_size,
             shuffle=False,
-            num_workers=opt.n_threads,
-            pin_memory=True)
+            num_workers=opt.n_threads)
         val_logger = Logger(
             os.path.join(opt.result_path, 'val.log'), ['epoch', 'loss', 'acc'])
 
     if opt.resume_path:
         print('loading checkpoint {}'.format(opt.resume_path))
-        checkpoint = torch.load(opt.resume_path)
+        checkpoint = paddle.load(opt.resume_path)
         assert opt.arch == checkpoint['arch']
 
         opt.begin_epoch = checkpoint['epoch']
@@ -142,23 +138,6 @@ if __name__ == '__main__':
                                         val_logger)
 
         if not opt.no_train and not opt.no_val:
-            scheduler.step(validation_loss)
+            learning_rate.step(validation_loss)
 
-    if opt.test:
-        spatial_transform = Compose([
-            Scale(int(opt.sample_size / opt.scale_in_test)),
-            CornerCrop(opt.sample_size, opt.crop_position_in_test),
-            ToTensor(opt.norm_value), norm_method
-        ])
-        temporal_transform = LoopPadding(opt.sample_duration)
-        target_transform = VideoID()
 
-        test_data = get_test_set(opt, spatial_transform, temporal_transform,
-                                 target_transform)
-        test_loader = torch.utils.data.DataLoader(
-            test_data,
-            batch_size=opt.batch_size,
-            shuffle=False,
-            num_workers=opt.n_threads,
-            pin_memory=True)
-        test.test(test_loader, model, opt, test_data.class_names)

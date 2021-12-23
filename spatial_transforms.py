@@ -3,7 +3,7 @@ import math
 import numbers
 import collections
 import numpy as np
-import torch
+import paddle
 from PIL import Image, ImageOps
 try:
     import accimage
@@ -53,23 +53,23 @@ class ToTensor(object):
         """
         if isinstance(pic, np.ndarray):
             # handle numpy array
-            img = torch.from_numpy(pic.transpose((2, 0, 1)))
+            img = paddle.to_tensor(pic.transpose((2, 0, 1)))
             # backward compatibility
             return img.float().div(self.norm_value)
 
         if accimage is not None and isinstance(pic, accimage.Image):
             nppic = np.zeros(
-                [pic.channels, pic.height, pic.width], dtype=np.float32)
+                [pic.channels, pic.height, pic.width], dtype='float32')
             pic.copyto(nppic)
-            return torch.from_numpy(nppic)
+            return paddle.to_tensor(nppic)
 
         # handle PIL Image
         if pic.mode == 'I':
-            img = torch.from_numpy(np.array(pic, np.int32, copy=False))
+            img = paddle.to_tensor(np.array(pic, np.int32, copy=False))
         elif pic.mode == 'I;16':
-            img = torch.from_numpy(np.array(pic, np.int16, copy=False))
+            img = paddle.to_tensor(np.array(pic, np.int16, copy=False))
         else:
-            img = torch.ByteTensor(torch.ByteStorage.from_buffer(pic.tobytes()))
+            img = paddle.to_tensor(pic.tobytes(),dtype='uint8')
         # PIL image mode: 1, L, P, I, F, RGB, YCbCr, RGBA, CMYK
         if pic.mode == 'YCbCr':
             nchannel = 3
@@ -81,10 +81,8 @@ class ToTensor(object):
         # put it from HWC to CHW format
         # yikes, this transpose takes 80% of the loading time/CPU
         img = img.transpose(0, 1).transpose(0, 2).contiguous()
-        if isinstance(img, torch.ByteTensor):
-            return img.float().div(self.norm_value)
-        else:
-            return img
+        img=img.astype('float32').div(self.norm_value)
+        return img
 
     def randomize_parameters(self):
         pass

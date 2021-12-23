@@ -9,7 +9,7 @@ def convert_csv_to_dict(csv_path, subset):
     keys = []
     key_labels = []
     for i in range(data.shape[0]):
-        row = data.ix[i, :]
+        row = data.loc[i, :]
         basename = '%s_%s_%s' % (row['youtube_id'],
                                  '%06d' % row['time_start'],
                                  '%06d' % row['time_end'])

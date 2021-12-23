@@ -1,5 +1,4 @@
-import torch
-from torch.autograd import Variable
+import paddle
 import time
 import os
 import sys
@@ -22,8 +21,8 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
     for i, (inputs, targets) in enumerate(data_loader):
         data_time.update(time.time() - end_time)
 
-        inputs = Variable(inputs)
-        targets = Variable(targets)
+        inputs = paddle.to_tensor(inputs)
+        targets = paddle.to_tensor(targets)
         outputs = model(inputs)
         loss = criterion(outputs, targets)
         acc = calculate_accuracy(outputs, targets)
@@ -76,4 +75,4 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
         }
-        torch.save(states, save_file_path)
+        paddle.save(states, save_file_path)

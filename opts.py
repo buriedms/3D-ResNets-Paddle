@@ -5,7 +5,7 @@ def parse_opts():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--root_path',
-        default='/root/data/ActivityNet',
+        default='./data/ActivityNet',
         type=str,
         help='Root directory path of data')
     parser.add_argument(
@@ -138,9 +138,9 @@ def parse_opts():
         '--resume_path',
         default='',
         type=str,
-        help='Save data (.pth) of previous training')
+        help='Save data (.pdparams) of previous training')
     parser.add_argument(
-        '--pretrain_path', default='', type=str, help='Pretrained model (.pth)')
+        '--pretrain_path', default='', type=str, help='Pretrained model (.pdparams)')
     parser.add_argument(
         '--ft_begin_index',
         default=0,

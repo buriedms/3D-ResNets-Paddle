@@ -1,5 +1,7 @@
-import torch
-import torch.utils.data as data
+# import torch
+# import torch.utils.data as data
+import paddle
+from paddle.io import Dataset
 from PIL import Image
 import os
 import math
@@ -17,21 +19,21 @@ def pil_loader(path):
             return img.convert('RGB')
 
 
-def accimage_loader(path):
-    try:
-        import accimage
-        return accimage.Image(path)
-    except IOError:
-        # Potentially a decoding problem, fall back to PIL.Image
-        return pil_loader(path)
-
-
-def get_default_image_loader():
-    from torchvision import get_image_backend
-    if get_image_backend() == 'accimage':
-        return accimage_loader
-    else:
-        return pil_loader
+# def accimage_loader(path):
+#     try:
+#         import accimage
+#         return accimage.Image(path)
+#     except IOError:
+#         # Potentially a decoding problem, fall back to PIL.Image
+#         return pil_loader(path)
+#
+#
+# def get_default_image_loader():
+#     from torchvision import get_image_backend
+#     if get_image_backend() == 'accimage':
+#         return accimage_loader
+#     else:
+#         return pil_loader
 
 
 def video_loader(video_dir_path, frame_indices, image_loader):
@@ -47,7 +49,7 @@ def video_loader(video_dir_path, frame_indices, image_loader):
 
 
 def get_default_video_loader():
-    image_loader = get_default_image_loader()
+    image_loader = pil_loader
     return functools.partial(video_loader, image_loader=image_loader)
 
 
@@ -134,7 +136,7 @@ def make_dataset(root_path, annotation_path, subset, n_samples_for_each_video,
     return dataset, idx_to_class
 
 
-class UCF101(data.Dataset):
+class UCF101(Dataset):
     """
     Args:
         root (string): Root directory path.
@@ -186,7 +188,7 @@ class UCF101(data.Dataset):
         if self.spatial_transform is not None:
             self.spatial_transform.randomize_parameters()
             clip = [self.spatial_transform(img) for img in clip]
-        clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
+        clip = paddle.stack(clip, 0).transpose(1, 0, 2, 3)
 
         target = self.data[index]
         if self.target_transform is not None:

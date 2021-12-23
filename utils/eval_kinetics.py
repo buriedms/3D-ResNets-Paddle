@@ -1,5 +1,5 @@
 import json
-import urllib2
+import urllib.request
 
 import numpy as np
 import pandas as pd
@@ -8,8 +8,8 @@ API = 'http://ec2-52-11-11-89.us-west-2.compute.amazonaws.com/challenge17/api.py
 
 def get_blocked_videos(api=API):
     api_url = '{}?action=get_blocked'.format(api)
-    req = urllib2.Request(api_url)
-    response = urllib2.urlopen(req)
+    req = urllib.request.Request(api_url)
+    response = urllib.request.urlopen(req)
     return json.loads(response.read())
 
 class KINETICSclassification(object):
@@ -44,11 +44,11 @@ class KINETICSclassification(object):
         self.prediction = self._import_prediction(prediction_filename)
 
         if self.verbose:
-            print '[INIT] Loaded annotations from {} subset.'.format(subset)
+            print ('[INIT] Loaded annotations from {} subset.'.format(subset))
             nr_gt = len(self.ground_truth)
-            print '\tNumber of ground truth instances: {}'.format(nr_gt)
+            print ('\tNumber of ground truth instances: {}'.format(nr_gt))
             nr_pred = len(self.prediction)
-            print '\tNumber of predictions: {}'.format(nr_pred)
+            print ('\tNumber of predictions: {}'.format(nr_pred))
 
     def _import_ground_truth(self, ground_truth_filename):
         """Reads ground truth file, checks if it is well formatted, and returns
@@ -139,7 +139,7 @@ class KINETICSclassification(object):
             print ('[RESULTS] Performance on ActivityNet untrimmed video '
                    'classification task.')
             # print '\tMean Average Precision: {}'.format(ap.mean())
-            print '\tError@{}: {}'.format(self.top_k, 1.0 - hit_at_k)
+            print ('\tError@{}: {}'.format(self.top_k, 1.0 - hit_at_k))
             #print '\tAvg Hit@{}: {}'.format(self.top_k, avg_hit_at_k)
         # self.ap = ap
         self.hit_at_k = hit_at_k

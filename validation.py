@@ -1,5 +1,6 @@
-import torch
-from torch.autograd import Variable
+# import torch
+# from torch.autograd import Variable
+import paddle
 import time
 import sys
 
@@ -20,8 +21,8 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger):
     for i, (inputs, targets) in enumerate(data_loader):
         data_time.update(time.time() - end_time)
 
-        inputs = Variable(inputs, volatile=True)
-        targets = Variable(targets, volatile=True)
+        inputs = paddle.to_tensor(inputs)
+        targets = paddle.to_tensor(targets)
         outputs = model(inputs)
         loss = criterion(outputs, targets)
         acc = calculate_accuracy(outputs, targets)
