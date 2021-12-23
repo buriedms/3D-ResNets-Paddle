@@ -58,7 +58,7 @@ def test(data_loader, model, opt, class_names):
                 calculate_video_results(output_buffer, previous_video_id,
                                         test_results, class_names)
                 output_buffer = []
-            output_buffer.append(outputs[j].data.cpu())
+            output_buffer.append(outputs[j].cpu())
             previous_video_id = targets[j]
 
         if (i % 100) == 0:

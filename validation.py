@@ -27,7 +27,7 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger):
         loss = criterion(outputs, targets)
         acc = calculate_accuracy(outputs, targets)
 
-        losses.update(loss.data[0], inputs.size(0))
+        losses.update(loss.numpy()[0], inputs.size(0))
         accuracies.update(acc, inputs.size(0))
 
         batch_time.update(time.time() - end_time)
