@@ -190,7 +190,7 @@ class ResNet(nn.Layer):
 
         x = self.avgpool(x)
 
-        x = x.shape(x.shape[0], -1)
+        x = x.reshape([x.shape[0], -1])
         x = self.fc(x)
 
         return x

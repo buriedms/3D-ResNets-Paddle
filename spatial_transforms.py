@@ -51,16 +51,17 @@ class ToTensor(object):
             # handle numpy array
             img = paddle.to_tensor(pic.transpose((2, 0, 1)))
             # backward compatibility
-            return img.float().div(self.norm_value)
+            img = img.astype('float32') / self.norm_value
+            return img
 
         # handle PIL Image
         if pic.mode == 'I':
-            img = paddle.to_tensor(np.array(pic, np.int32, copy=False))
+            img = paddle.to_tensor(np.array(pic, np.int32, copy=False), dtype='float32')
         elif pic.mode == 'I;16':
-            img = paddle.to_tensor(np.array(pic, np.int16, copy=False))
+            img = paddle.to_tensor(np.array(pic, np.int16, copy=False), dtype='float32')
         else:
             # img = torch.ByteTensor(torch.ByteStorage.from_buffer(pic.tobytes()))
-            img = paddle.to_tensor(np.array(pic), dtype='uint8')
+            img = paddle.to_tensor(np.array(pic, np.uint8), dtype='float32')
         # PIL image mode: 1, L, P, I, F, RGB, YCbCr, RGBA, CMYK
         if pic.mode == 'YCbCr':
             nchannel = 3
@@ -68,11 +69,12 @@ class ToTensor(object):
             nchannel = 1
         else:
             nchannel = len(pic.mode)
+
         img = img.reshape([pic.size[1], pic.size[0], nchannel])
         # put it from HWC to CHW format
         # yikes, this transpose takes 80% of the loading time/CPU
-        img = img.astype('float32')/self.norm_value
-        img = img.transpose((2,0,1))
+        img = img.astype('float32') / self.norm_value
+        img = img.transpose((2, 0, 1))
         return img
 
     def randomize_parameters(self):
@@ -102,9 +104,7 @@ class Normalize(object):
             Tensor: Normalized image.
         """
         # TODO: make efficient
-        for t, m, s in zip(tensor, self.mean, self.std):
-            t=(t-m)/s
-            # t.sub_(m).div_(s)
+        tensor = paddle.vision.transforms.functional.normalize(tensor, mean=self.mean, std=self.std)
         return tensor
 
     def randomize_parameters(self):

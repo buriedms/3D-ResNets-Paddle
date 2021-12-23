@@ -23,16 +23,15 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
         inputs = paddle.to_tensor(inputs)
         targets = paddle.to_tensor(targets)
-        print(inputs)
-        raise NotImplementedError
+
         outputs = model(inputs)
         loss = criterion(outputs, targets)
         acc = calculate_accuracy(outputs, targets)
 
-        losses.update(loss.numpy()[0], inputs.size(0))
-        accuracies.update(acc, inputs.size(0))
+        losses.update(loss.numpy()[0], inputs.shape[0])
+        accuracies.update(acc, inputs.shape[0])
 
-        optimizer.zero_grad()
+        optimizer.clear_grad()
         loss.backward()
         optimizer.step()
 

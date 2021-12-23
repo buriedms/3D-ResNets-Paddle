@@ -47,8 +47,6 @@ if __name__ == '__main__':
     paddle.seed(opt.manual_seed)
 
     model, parameters = generate_model(opt)
-    print(model)
-    # raise NotImplementedError
 
     criterion = nn.CrossEntropyLoss()
 
