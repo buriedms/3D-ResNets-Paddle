@@ -43,7 +43,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             'iter': (epoch - 1) * len(data_loader) + (i + 1),
             'loss': losses.val,
             'acc': accuracies.val,
-            'lr': optimizer.param_groups[0]['lr']
+            'lr': optimizer.get_lr()
         })
 
         print('Epoch: [{0}][{1}/{2}]\t'
@@ -63,7 +63,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         'epoch': epoch,
         'loss': losses.avg,
         'acc': accuracies.avg,
-        'lr': optimizer.param_groups[0]['lr']
+        'lr': optimizer.get_lr()
     })
 
     if epoch % opt.checkpoint == 0:
