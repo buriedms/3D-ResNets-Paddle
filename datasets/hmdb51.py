@@ -185,7 +185,7 @@ class HMDB51(paddle.io.Dataset):
         if self.spatial_transform is not None:
             self.spatial_transform.randomize_parameters()
             clip = [self.spatial_transform(img) for img in clip]
-        clip = paddle.stack(clip, 0).transpose(1, 0, 2, 3)
+        clip = paddle.stack(clip, 0).transpose([1, 0, 2, 3])
 
         target = self.data[index]
         if self.target_transform is not None:

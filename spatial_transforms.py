@@ -5,10 +5,6 @@ import collections
 import numpy as np
 import paddle
 from PIL import Image, ImageOps
-try:
-    import accimage
-except ImportError:
-    accimage = None
 
 
 class Compose(object):
@@ -57,19 +53,14 @@ class ToTensor(object):
             # backward compatibility
             return img.float().div(self.norm_value)
 
-        if accimage is not None and isinstance(pic, accimage.Image):
-            nppic = np.zeros(
-                [pic.channels, pic.height, pic.width], dtype='float32')
-            pic.copyto(nppic)
-            return paddle.to_tensor(nppic)
-
         # handle PIL Image
         if pic.mode == 'I':
             img = paddle.to_tensor(np.array(pic, np.int32, copy=False))
         elif pic.mode == 'I;16':
             img = paddle.to_tensor(np.array(pic, np.int16, copy=False))
         else:
-            img = paddle.to_tensor(pic.tobytes(),dtype='uint8')
+            # img = torch.ByteTensor(torch.ByteStorage.from_buffer(pic.tobytes()))
+            img = paddle.to_tensor(np.array(pic), dtype='uint8')
         # PIL image mode: 1, L, P, I, F, RGB, YCbCr, RGBA, CMYK
         if pic.mode == 'YCbCr':
             nchannel = 3
@@ -77,11 +68,11 @@ class ToTensor(object):
             nchannel = 1
         else:
             nchannel = len(pic.mode)
-        img = img.view(pic.size[1], pic.size[0], nchannel)
+        img = img.reshape([pic.size[1], pic.size[0], nchannel])
         # put it from HWC to CHW format
         # yikes, this transpose takes 80% of the loading time/CPU
-        img = img.transpose(0, 1).transpose(0, 2).contiguous()
-        img=img.astype('float32').div(self.norm_value)
+        img = img.astype('float32')/self.norm_value
+        img = img.transpose((2,0,1))
         return img
 
     def randomize_parameters(self):
@@ -112,7 +103,8 @@ class Normalize(object):
         """
         # TODO: make efficient
         for t, m, s in zip(tensor, self.mean, self.std):
-            t.sub_(m).div_(s)
+            t=(t-m)/s
+            # t.sub_(m).div_(s)
         return tensor
 
     def randomize_parameters(self):
