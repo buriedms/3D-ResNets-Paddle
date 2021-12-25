@@ -42,6 +42,8 @@ ResNeXt-101在Kinetics测试集上的平均准确率达到了78.4%。
 
 ## 训练模型及训练日志
 
+可在aiztudio平台上下载[训练日志和模型](https://aistudio.baidu.com/aistudio/datasetdetail/122966)
+
 ## 训练准备
 ### 构建数据集目录树
 
