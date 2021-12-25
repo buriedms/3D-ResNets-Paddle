@@ -26,11 +26,13 @@ def conv3x3x3(in_planes, out_planes, stride=1):
 
 def downsample_basic_block(x, planes, stride):
     out = F.avg_pool3d(x, kernel_size=1, stride=stride)
-    zero_pads = paddle.Tensor(
-        out.size(0), planes - out.size(1), out.size(2), out.size(3),
-        out.size(4)).zero_()
+    # zero_pads = paddle.Tensor(
+    #     out.size(0), planes - out.size(1), out.size(2), out.size(3),
+    #     out.size(4)).zero_()
+    zero_pads=paddle.zeros((out.shape[0], planes - out.shape[1], out.shape[2], out.shape[3],
+        out.shape[4]))
 
-    out = paddle.concat([out.data, zero_pads], axis=1)
+    out = paddle.concat([out, zero_pads], axis=1)
 
     return out
 
@@ -211,8 +213,8 @@ def get_fine_tuning_parameters(model, ft_begin_index):
             if ft_module in k:
                 parameters.append({'params': v})
                 break
-        else:
-            parameters.append({'params': v, 'lr': 0.0})
+            else:
+                parameters.append({'params': v, 'lr': 0.0})
 
     return parameters
 

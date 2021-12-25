@@ -25,19 +25,19 @@ def parse_opts():
         help='Result directory path')
     parser.add_argument(
         '--dataset',
-        default='kinetics',
+        default='ucf101',
         type=str,
         help='Used dataset (activitynet | kinetics | ucf101 | hmdb51)')
     parser.add_argument(
         '--n_classes',
-        default=400,
+        default=101,
         type=int,
         help=
         'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51)'
     )
     parser.add_argument(
         '--n_finetune_classes',
-        default=400,
+        default=101,
         type=int,
         help=
         'Number of classes for fine-tuning. n_classes is set to the number when pretraining.'
@@ -81,8 +81,6 @@ def parse_opts():
         help=
         'Initial learning rate (divided by 10 while training by lr scheduler)')
     parser.add_argument('--momentum', default=0.9, type=float, help='Momentum')
-    parser.add_argument(
-        '--dampening', default=0.9, type=float, help='dampening of SGD')
     parser.add_argument(
         '--weight_decay', default=1e-3, type=float, help='Weight Decay')
     parser.add_argument(
@@ -201,8 +199,7 @@ def parse_opts():
         '--norm_value',
         default=1,
         type=int,
-        help=
-        'If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
+        help='If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
     parser.add_argument(
         '--model',
         default='resnet',

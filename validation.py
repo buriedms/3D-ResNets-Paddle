@@ -1,6 +1,6 @@
 import paddle
 import time
-import sys
+import os
 
 from utils import AverageMeter, calculate_accuracy
 
@@ -36,14 +36,22 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger):
               'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
               'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
               'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
-                  epoch,
-                  i + 1,
-                  len(data_loader),
-                  batch_time=batch_time,
-                  data_time=data_time,
-                  loss=losses,
-                  acc=accuracies))
+            epoch,
+            i + 1,
+            len(data_loader),
+            batch_time=batch_time,
+            data_time=data_time,
+            loss=losses,
+            acc=accuracies))
 
     logger.log({'epoch': epoch, 'loss': losses.avg, 'acc': accuracies.avg})
+    if accuracies.avg >= 0.424:
+        save_file_path = os.path.join(opt.result_path, 'save_best.pdparams')
+        states = {
+            'epoch': epoch + 1,
+            'arch': opt.arch,
+            'state_dict': model.state_dict()
+        }
+        paddle.save(states, save_file_path)
 
     return losses.avg

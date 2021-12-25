@@ -15,7 +15,7 @@ from spatial_transforms import (
 from temporal_transforms import LoopPadding, TemporalRandomCrop
 from target_transforms import ClassLabel, VideoID
 from target_transforms import Compose as TargetCompose
-from dataset import get_training_set, get_validation_set, get_test_set
+from dataset import get_training_set, get_validation_set
 from utils import Logger
 from train import train_epoch
 from validation import val_epoch
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     opt.arch = '{}-{}'.format(opt.model, opt.model_depth)
     opt.mean = get_mean(opt.norm_value, dataset=opt.mean_dataset)
     opt.std = get_std(opt.norm_value)
-    print(opt)
+    print(opt.mean,opt.std,opt.std_norm)
 
 
     os.makedirs(opt.result_path,exist_ok=True)

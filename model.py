@@ -60,13 +60,13 @@ def generate_model(opt):
         pretrain = paddle.load(opt.pretrain_path)
         assert opt.arch == pretrain['arch']
 
-        model.load_state_dict(pretrain['state_dict'])
+        model.set_state_dict(pretrain['state_dict'])
 
         model.module.fc = nn.Linear(model.module.fc.in_features,
                                     opt.n_finetune_classes)
 
-        parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
-        return model, parameters
+        # parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
+        # return model, parameters
 
 
     return model, model.parameters()

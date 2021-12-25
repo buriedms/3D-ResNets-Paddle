@@ -13,9 +13,11 @@ from spatial_transforms import (
 from temporal_transforms import LoopPadding, TemporalRandomCrop
 from target_transforms import ClassLabel, VideoID
 from target_transforms import Compose as TargetCompose
-from dataset import get_test_set
+from dataset import get_test_set,get_validation_set
 
-from utils import AverageMeter
+from utils import AverageMeter,calculate_accuracy
+
+from utils import Logger
 
 
 def calculate_video_results(output_buffer, video_id, test_results, class_names):
@@ -24,7 +26,7 @@ def calculate_video_results(output_buffer, video_id, test_results, class_names):
     sorted_scores, locs = paddle.topk(average_scores, k=10)
 
     video_results = []
-    for i in range(sorted_scores.size()[0]):
+    for i in range(sorted_scores.shape[0]):
         video_results.append({
             'label': class_names[locs.tolist()[i]],
             'score': sorted_scores.tolist()[i]
@@ -53,12 +55,12 @@ def test(data_loader, model, opt, class_names):
         if not opt.no_softmax_in_test:
             outputs = paddle.nn.functional.softmax(outputs,axis=1)
 
-        for j in range(outputs.size(0)):
+        for j in range(outputs.shape[0]):
             if not (i == 0 and j == 0) and targets[j] != previous_video_id:
                 calculate_video_results(output_buffer, previous_video_id,
                                         test_results, class_names)
                 output_buffer = []
-            output_buffer.append(outputs[j].cpu())
+            output_buffer.append(outputs[j])
             previous_video_id = targets[j]
 
         if (i % 100) == 0:
@@ -82,6 +84,45 @@ def test(data_loader, model, opt, class_names):
             'w') as f:
         json.dump(test_results, f)
 
+def val_epoch(epoch, data_loader, model, criterion, opt,):
+    print('validation at epoch {}'.format(epoch))
+
+    model.eval()
+
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+    losses = AverageMeter()
+    accuracies = AverageMeter()
+
+    end_time = time.time()
+    for i, (inputs, targets) in enumerate(data_loader):
+        data_time.update(time.time() - end_time)
+
+        inputs = paddle.to_tensor(inputs)
+        targets = paddle.to_tensor(targets)
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        acc = calculate_accuracy(outputs, targets)
+
+        losses.update(loss.numpy()[0], inputs.shape[0])
+        accuracies.update(acc, inputs.shape[0])
+
+        batch_time.update(time.time() - end_time)
+        end_time = time.time()
+
+        print('Test :\t'
+              'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+              'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+              'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+              'Acc {acc.val:.3f} ({acc.avg:.3f})'.format(
+                  batch_time=batch_time,
+                  data_time=data_time,
+                  loss=losses,
+                  acc=accuracies))
+
+    print('The test Acc result : {acc.avg:.6f}'.format(acc=accuracies))
+
+
 def main():
     opt = parse_opts()
     if opt.root_path != '':
@@ -98,13 +139,13 @@ def main():
     opt.arch = '{}-{}'.format(opt.model, opt.model_depth)
     opt.mean = get_mean(opt.norm_value, dataset=opt.mean_dataset)
     opt.std = get_std(opt.norm_value)
-    print(opt)
-    # raise NotImplementedError
 
     os.makedirs(opt.result_path, exist_ok=True)
     with open(os.path.join(opt.result_path, 'opts.json'), 'w') as opt_file:
         json.dump(vars(opt), opt_file)
 
+
+    criterion = paddle.nn.CrossEntropyLoss()
     paddle.seed(opt.manual_seed)
 
     model, parameters = generate_model(opt)
@@ -115,6 +156,21 @@ def main():
         norm_method = Normalize(opt.mean, [1, 1, 1])
     else:
         norm_method = Normalize(opt.mean, opt.std)
+
+    spatial_transform = Compose([
+        Scale(opt.sample_size),
+        CenterCrop(opt.sample_size),
+        ToTensor(opt.norm_value), norm_method
+    ])
+    temporal_transform = LoopPadding(opt.sample_duration)
+    target_transform = ClassLabel()
+    validation_data = get_validation_set(
+        opt, spatial_transform, temporal_transform, target_transform)
+    val_loader = paddle.io.DataLoader(
+        validation_data,
+        batch_size=opt.batch_size,
+        shuffle=False,
+        num_workers=opt.n_threads)
 
     spatial_transform = Compose([
         Scale(int(opt.sample_size / opt.scale_in_test)),
@@ -131,6 +187,8 @@ def main():
         batch_size=opt.batch_size,
         shuffle=False,
         num_workers=opt.n_threads)
+
+    val_epoch('Test', val_loader, model, criterion, opt)
     test(test_loader, model, opt, test_data.class_names)
 
 if __name__ == '__main__':

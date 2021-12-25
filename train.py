@@ -24,6 +24,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         inputs = paddle.to_tensor(inputs)
         targets = paddle.to_tensor(targets)
 
+
         outputs = model(inputs)
         loss = criterion(outputs, targets)
         acc = calculate_accuracy(outputs, targets)
@@ -69,7 +70,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
     if epoch % opt.checkpoint == 0:
         save_file_path = os.path.join(opt.result_path,
-                                      'save_{}.pth'.format(epoch))
+                                      'save_{}.pdparams'.format(epoch))
         states = {
             'epoch': epoch + 1,
             'arch': opt.arch,
@@ -77,3 +78,4 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             'optimizer': optimizer.state_dict(),
         }
         paddle.save(states, save_file_path)
+
